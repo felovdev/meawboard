@@ -1,0 +1,13 @@
+{
+  "name": "meaw-board",
+  "version": "1.0.0",
+  "description": "meaw board — онлайн-доска с совместной работой",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
