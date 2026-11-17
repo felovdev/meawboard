@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>meaw board</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  // Ссылки вида /meawboard/<токен> превращаем в /meawboard/#/j/<токен>
+  (function () {
+    var parts = location.pathname.split('/').filter(Boolean);
+    var base = location.hostname.endsWith('github.io') ? '/' + (parts[0] || '') + '/' : '/';
+    var tok = location.hostname.endsWith('github.io') ? parts[1] : parts[0];
+    if (tok && /^[A-Za-z0-9]{10,64}$/.test(tok)) location.replace(base + '#/j/' + tok);
+    else location.replace(base);
+  })();
+</script></head>
+<body>Перенаправление…</body></html>

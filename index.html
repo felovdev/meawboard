@@ -2,98 +2,134 @@
 <html lang="ru" data-theme="light">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <meta name="theme-color" content="#6750A4">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#6750a4">
   <title>meaw board</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236750a4'/%3E%3Cpath d='M16 46V20l9 9h14l9-9v26z' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=JetBrains+Mono&family=Lora&family=Roboto:wght@400;500;700&display=swap">
   <link rel="stylesheet" href="style.css">
+  <script>
+    // Тема и цвет — до отрисовки, чтобы не мигало
+    try {
+      var p = JSON.parse(localStorage.getItem('meaw-prefs') || '{}');
+      var dark = p.theme === 'dark' || (p.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      if (p.accent) document.documentElement.style.setProperty('--accent', p.accent);
+    } catch (e) {}
+  </script>
 </head>
-<body>
+<body data-view="home">
 
-  <!-- Холст -->
-  <main id="stage" data-tool="select">
+<!-- ========== ГЛАВНАЯ ========== -->
+<section id="home" class="view">
+  <header class="home-bar">
+    <div class="logo"><span class="logo-mark"></span><span>meaw board</span></div>
+    <label class="search">
+      <span data-icon="search"></span>
+      <input id="homeSearch" type="search" placeholder="Поиск по доскам" autocomplete="off">
+    </label>
+    <button id="homeAccount" class="account-btn" aria-label="Аккаунт"></button>
+  </header>
+
+  <main class="home-main">
+    <div id="demoBanner" class="banner" hidden>
+      <span data-icon="lock"></span>
+      <div><b>Демо-режим.</b> Облако не подключено: аккаунты и доски хранятся только в этом браузере, а ссылки работают лишь между вкладками. Как включить общий доступ — в файле <b>SETUP.md</b>.</div>
+    </div>
+
+    <div class="home-title">
+      <h1 id="homeHello">Ваши доски</h1>
+      <div class="tabs" id="homeTabs">
+        <button class="tab on" data-tab="all">Все</button>
+        <button class="tab" data-tab="mine">Мои</button>
+        <button class="tab" data-tab="shared">Доступные мне</button>
+      </div>
+    </div>
+
+    <div id="homeGrid" class="grid"></div>
+    <div id="homeEmpty" class="home-empty" hidden></div>
+  </main>
+
+  <button id="fabNew" class="fab" aria-label="Новая доска"><span data-icon="plus"></span><span class="fab-text">Новая доска</span></button>
+</section>
+
+<!-- ========== ДОСКА ========== -->
+<section id="boardView" class="view">
+  <div id="stage" class="stage" data-tool="select">
     <svg id="svg" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="shadow" x="-20%" y="-20%" width="150%" height="150%">
           <feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".25"/>
         </filter>
       </defs>
-      <g id="world">
-        <g id="layer"></g>
-        <g id="overlay"></g>
-      </g>
+      <g id="world"><g id="layer"></g><g id="overlay"></g></g>
     </svg>
+    <div id="cursors"></div>
     <textarea id="editor" hidden spellcheck="false"></textarea>
-    <div class="empty" id="empty">
-      <svg viewBox="0 0 32 32" class="empty-cat"><path d="M6 12V4l7 4.5q3-.5 6 0L26 4v8q2 3 1 7-2 8-11 8T5 19q-1-4 1-7z"/></svg>
-      <p>Доска пустая</p>
-      <small>Двойной клик — новая заметка</small>
+    <div id="empty" class="empty" hidden>
+      <div class="empty-card">
+        <h2>Пустая доска</h2>
+        <p>Двойной клик — стикер. Ctrl+V — вставить картинку. Тащите файлы прямо сюда.</p>
+      </div>
     </div>
-  </main>
+  </div>
 
-  <!-- Верхняя панель слева -->
   <header class="bar bar-left">
-    <button class="icon-btn" id="btnBoards" data-tip="Мои доски" aria-label="Мои доски"><span data-icon="menu"></span></button>
-    <div class="logo" title="meaw board">
-      <svg viewBox="0 0 32 32">
-        <path class="cat" d="M6 12V4l7 4.5q3-.5 6 0L26 4v8q2 3 1 7-2 8-11 8T5 19q-1-4 1-7z"/>
-        <circle cx="12" cy="16" r="1.9" class="eye"/><circle cx="20" cy="16" r="1.9" class="eye"/>
-        <path d="M14 20.4q2 1.9 4 0" class="mouth"/>
-      </svg>
-    </div>
-    <input id="boardName" class="name" value="meaw board" maxlength="60" spellcheck="false" aria-label="Название доски">
-    <span class="sync" id="sync" data-state="ok" title="Сохранено"></span>
+    <button id="btnHome" class="icon-btn" aria-label="К моим доскам" data-icon="arrowLeft"></button>
+    <input id="boardName" class="board-name" maxlength="80" spellcheck="false" aria-label="Название доски">
+    <span id="sync" class="sync" title="Синхронизация"></span>
   </header>
 
-  <!-- Верхняя панель справа -->
   <header class="bar bar-right">
-    <div class="presence" id="presence" hidden></div>
-    <button class="icon-btn" id="btnUndo" data-tip="Отменить (Ctrl+Z)" aria-label="Отменить"><span data-icon="undo"></span></button>
-    <button class="icon-btn" id="btnRedo" data-tip="Повторить (Ctrl+Y)" aria-label="Повторить"><span data-icon="redo"></span></button>
-    <span class="vsep"></span>
-    <button class="icon-btn" id="btnGrid" data-tip="Сетка" aria-label="Сетка"><span data-icon="grid"></span></button>
-    <button class="icon-btn" id="btnTheme" data-tip="Тема" aria-label="Тема"><span data-icon="moon"></span></button>
-    <button class="btn tonal" id="btnMenu" aria-haspopup="true"><span data-icon="download"></span><span>Файл</span></button>
-    <button class="btn filled" id="btnShare"><span data-icon="share"></span><span>Поделиться</span></button>
+    <div id="presence" class="presence"></div>
+    <button id="btnShare" class="btn tonal"><span data-icon="share"></span><span class="btn-text">Доступ</span></button>
+    <button id="btnLook" class="icon-btn" aria-label="Оформление доски" data-icon="palette"></button>
+    <button id="btnAccount" class="account-btn" aria-label="Аккаунт"></button>
+    <button id="btnMenu" class="icon-btn" aria-label="Меню" data-icon="more"></button>
+    <div id="menu" class="menu" hidden>
+      <button class="menu-item" data-act="png"><span data-icon="image"></span>Экспорт в PNG</button>
+      <button class="menu-item" data-act="svg"><span data-icon="download"></span>Экспорт в SVG</button>
+      <button class="menu-item" data-act="json"><span data-icon="download"></span>Сохранить в файл</button>
+      <button class="menu-item" data-act="open"><span data-icon="upload"></span>Открыть из файла</button>
+      <div class="menu-sep"></div>
+      <button class="menu-item" data-act="clear"><span data-icon="trash"></span>Очистить доску</button>
+    </div>
   </header>
 
-  <!-- Меню «Файл» -->
-  <div class="menu" id="menu" hidden>
-    <button class="menu-item" data-act="png"><span data-icon="image"></span>Экспорт в PNG</button>
-    <button class="menu-item" data-act="svg"><span data-icon="image"></span>Экспорт в SVG</button>
-    <button class="menu-item" data-act="json"><span data-icon="download"></span>Сохранить доску (.json)</button>
-    <button class="menu-item" data-act="open"><span data-icon="upload"></span>Открыть доску (.json)</button>
-    <div class="menu-sep"></div>
-    <button class="menu-item danger" data-act="clear"><span data-icon="trash"></span>Очистить доску</button>
+  <nav id="toolbar" class="toolbar" aria-label="Инструменты"></nav>
+  <aside id="props" class="props" hidden></aside>
+
+  <div class="bottom-left">
+    <button id="btnUndo" class="icon-btn" aria-label="Отменить" data-icon="undo"></button>
+    <button id="btnRedo" class="icon-btn" aria-label="Повторить" data-icon="redo"></button>
   </div>
-  <input type="file" id="fileInput" accept=".json,application/json" hidden>
-
-  <!-- Инструменты -->
-  <nav class="toolbar" id="toolbar" aria-label="Инструменты"></nav>
-
-  <!-- Свойства выбранного -->
-  <div class="props" id="props" hidden></div>
-
-  <!-- Масштаб -->
   <div class="zoom">
-    <button class="icon-btn sm" id="zoomOut" data-tip="Уменьшить (−)" aria-label="Уменьшить"><span data-icon="minus"></span></button>
-    <button class="zoom-label" id="zoomLabel" data-tip="Сбросить до 100%">100%</button>
-    <button class="icon-btn sm" id="zoomIn" data-tip="Увеличить (+)" aria-label="Увеличить"><span data-icon="plus"></span></button>
-    <span class="vsep"></span>
-    <button class="icon-btn sm" id="zoomFit" data-tip="Показать всё (0)" aria-label="Показать всё"><span data-icon="fit"></span></button>
+    <button id="zoomOut" class="icon-btn" aria-label="Уменьшить" data-icon="minus"></button>
+    <button id="zoomLabel" class="zoom-label">100%</button>
+    <button id="zoomIn" class="icon-btn" aria-label="Увеличить" data-icon="plus"></button>
+    <button id="zoomFit" class="icon-btn" aria-label="Показать всё" data-icon="fit"></button>
   </div>
+  <div id="viewerNote" class="viewer-note" hidden><span data-icon="eye"></span>Только просмотр</div>
+</section>
 
-  <div class="cursors" id="cursors"></div>
+<!-- ========== ПРИСОЕДИНЕНИЕ ПО ССЫЛКЕ ========== -->
+<section id="joinView" class="view">
+  <div id="joinCard" class="join-card"></div>
+</section>
 
-  <!-- Меню досок и аккаунт -->
-  <div class="drawer-scrim" id="drawerScrim"></div>
-  <aside class="drawer" id="drawer" aria-label="Мои доски"></aside>
+<div id="dialogHost"></div>
+<div id="snack" class="snack" role="status"></div>
+<input id="fileInput" type="file" accept=".json,application/json" hidden>
 
-  <div class="snackbar" id="snack" role="status"></div>
-
-  <script src="script.js"></script>
-  <script src="app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="backend-local.js"></script>
+<script src="backend-firebase.js"></script>
+<script src="script.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
